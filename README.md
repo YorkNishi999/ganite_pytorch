@@ -54,3 +54,14 @@ tensorboard --logdir .results/test01
 -   test_y_hat: estimated potential outcomes
 -   metric_results: PEHE and ATE
 -   model parameters for generator, discriminator, and inference_net
+
+### Citation
+```
+@software{GANITE_pytorch,
+  author = {Yohei Nishimura},
+  url = {https://github.com/YorkNishi999/ganite_pytorch},
+  version = {1.0.0},
+  year = {2023}
+}
+```
+
