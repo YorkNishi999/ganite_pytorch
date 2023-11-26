@@ -41,7 +41,8 @@ Note that network parameters should be optimized.
 
 1. Run the experiments
 ```shell
-python3 main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 30 --iteration 10000 --batch_size 256 --alpha 1 --name test01
+python3 main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 100 --iteration 100000 --batch_size 1024 --alpha 1 --name test04 --lr 5e-5
+python3 main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 100 --iteration 100000 --batch_size 1024 --alpha 1 --name test05 --lr 1e-5
 ```
 
 2. See log

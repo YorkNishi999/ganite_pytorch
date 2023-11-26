@@ -22,7 +22,7 @@ warnings.filterwarnings("ignore")
 
 from ganite_torch import ganite_torch
 from data_loading import data_loading_twin
-from metrics import PEHE, ATE
+from metrics_all import *
 from utils import create_result_dir
 
 def main (args):
@@ -59,7 +59,7 @@ def main (args):
 
     create_result_dir(name)
 
-    test_y_hat = ganite_torch(train_x, train_t, train_y, test_x, parameters, name)
+    test_y_hat = ganite_torch(train_x, train_t, train_y, test_x, test_potential_y, parameters, name)
     print('Finish GANITE training and potential outcome estimations')
 
     ## Performance metrics
@@ -67,12 +67,19 @@ def main (args):
     metric_results = dict()
 
     # 1. PEHE
-    test_PEHE = PEHE(test_potential_y, test_y_hat)
-    metric_results['PEHE'] = np.round(test_PEHE, 4)
+    test_PEHE, interval = PEHE(test_potential_y, test_y_hat)
+    metric_results['PEHE'] = np.round(test_PEHE)
+    metric_results['PEHE_interval'] = np.round(interval)
 
     # 2. ATE
-    test_ATE = ATE(test_potential_y, test_y_hat)
-    metric_results['ATE'] = np.round(test_ATE, 4)
+    test_ATE, interval = ATE(test_potential_y, test_y_hat)
+    metric_results['ATE'] = np.round(test_ATE)
+    metric_results['ATE_interval'] = np.round(interval)
+
+    # # 3. sqrt_PEHE # comment out for twin
+    # test_sqrt_PEHE, interval = sqrt_PEHE(test_potential_y, test_y_hat)
+    # metric_results['sqrt_PEHE'] = np.round(test_sqrt_PEHE)
+    # metric_results['sqrt_PEHE_interval'] = np.round(interval)
 
     ## Print performance metrics on testing data
     print(metric_results)

@@ -17,7 +17,9 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
 
         self.fc1 = nn.Linear(input_dim + 2, h_dim) # +2 for t and y
+        self.dp1 = nn.Dropout(p=0.2)
         self.fc2 = nn.Linear(h_dim, h_dim)
+        self.dp2 = nn.Dropout(p=0.2)
 
         # if t = 0, train fc31, 32
         self.fc31 = nn.Linear(h_dim, h_dim)
@@ -42,8 +44,8 @@ class Generator(nn.Module):
 
     def forward(self, x, t, y):
         inputs = torch.cat([x, t, y], dim=1)
-        h1 = torch.relu(self.fc1(inputs))
-        h2 = torch.relu(self.fc2(h1))
+        h1 = self.dp1(torch.relu(self.fc1(inputs)))
+        h2 = self.dp2(torch.relu(self.fc2(h1)))
         h31 = torch.relu(self.fc31(h2))
         logit1 = self.fc32(h31)
         y_hat_1 = torch.nn.Sigmoid()(logit1)

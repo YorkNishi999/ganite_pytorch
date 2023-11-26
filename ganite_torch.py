@@ -1,5 +1,6 @@
 import os
 import random
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -9,12 +10,13 @@ from torch.utils.tensorboard import SummaryWriter
 
 from model import Generator, Discriminator, InferenceNet
 from utils import parameter_setting_discriminator, parameter_setting_generator, parameter_setting_inference_net
+from metrics_all import *
 
 random.seed(42)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # GANITE function
-def ganite_torch(train_x, train_t, train_y, test_x, parameters, name):
+def ganite_torch(train_x, train_t, train_y, test_x, test_potential_y, parameters, name):
 
     # Unpack parameters
     h_dim = parameters['h_dim']
@@ -38,9 +40,9 @@ def ganite_torch(train_x, train_t, train_y, test_x, parameters, name):
     inference_net = InferenceNet(train_x.shape[1], h_dim).to(device)
 
     # Optimizers
-    G_optimizer = optim.AdamW(generator.parameters(), lr=parameters['lr'])
-    D_optimizer = optim.AdamW(discriminator.parameters(), lr=parameters['lr'])
-    I_optimizer = optim.AdamW(inference_net.parameters(), lr=parameters['lr'])
+    G_optimizer = optim.AdamW(generator.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
+    D_optimizer = optim.AdamW(discriminator.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
+    I_optimizer = optim.AdamW(inference_net.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
 
     # logs
     writer = SummaryWriter(log_dir=os.path.join(f"results/{name}/logs", "tensorboard_log"))
@@ -105,9 +107,26 @@ def ganite_torch(train_x, train_t, train_y, test_x, parameters, name):
                 g_loss_list.append(G_loss.item())
                 d_loss_list.append(D_loss.item())
                 i_loss_list.append(I_loss.item())
-            writer.add_scalar('D_loss_epoch', sum(d_loss_list) / len(d_loss_list), epoch)
-            writer.add_scalar('G_loss_epoch', sum(g_loss_list) / len(g_loss_list), epoch)
-            writer.add_scalar('I_loss_epoch', sum(i_loss_list) / len(i_loss_list), epoch)
+            writer.add_scalar('loss/D_loss_epoch', sum(d_loss_list) / len(d_loss_list), epoch)
+            writer.add_scalar('loss/G_loss_epoch', sum(g_loss_list) / len(g_loss_list), epoch)
+            writer.add_scalar('loss/I_loss_epoch', sum(i_loss_list) / len(i_loss_list), epoch)
+
+            # calc metric
+            test_y_hat = inference_net(test_x).cpu().detach().numpy()
+
+            # 1. PEHE
+            test_PEHE, interval = PEHE(test_potential_y, test_y_hat)
+            writer.add_scalar('metrics/test_PEHE', test_PEHE, epoch)
+
+            # 2. ATE
+            test_ATE, interval = ATE(test_potential_y, test_y_hat)
+            writer.add_scalar('metrics/test_ATE', test_ATE, epoch)
+
+            # # 3. sqrt_PEHE # comment out for twin
+            # test_sqrt_PEHE, interval = sqrt_PEHE(test_potential_y, test_y_hat)
+            # writer.add_scalar('test_sqrt_PEHE', test_sqrt_PEHE, epoch)
+            # print(f"test_sqrt_PEHE: {test_sqrt_PEHE} ({interval})")
+
 
             # Optionally print training progress
             if epoch % 1000 == 0 and epoch != 0:
