@@ -16,7 +16,7 @@ random.seed(42)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # GANITE function
-def ganite_torch(train_x, train_t, train_y, test_x, test_potential_y, parameters, name):
+def ganite_torch(train_x, train_t, train_y, test_x, test_potential_y, parameters, name, flags):
 
     # Unpack parameters
     h_dim = parameters['h_dim']
@@ -35,14 +35,19 @@ def ganite_torch(train_x, train_t, train_y, test_x, test_potential_y, parameters
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     # Initialize models
-    generator = Generator(train_x.shape[1], h_dim).to(device)
+    generator = Generator(train_x.shape[1], h_dim, flags['dropout']).to(device)
     discriminator = Discriminator(train_x.shape[1], h_dim).to(device)
     inference_net = InferenceNet(train_x.shape[1], h_dim).to(device)
 
     # Optimizers
-    G_optimizer = optim.AdamW(generator.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
-    D_optimizer = optim.AdamW(discriminator.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
-    I_optimizer = optim.AdamW(inference_net.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
+    if flags['adamw']:
+        G_optimizer = optim.AdamW(generator.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
+        D_optimizer = optim.AdamW(discriminator.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
+        I_optimizer = optim.AdamW(inference_net.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
+    else:
+        G_optimizer = optim.Adam(generator.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
+        D_optimizer = optim.Adam(discriminator.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
+        I_optimizer = optim.Adam(inference_net.parameters(), lr=parameters['lr'], betas=(0.9, 0.999))
 
     # logs
     writer = SummaryWriter(log_dir=os.path.join(f"results/{name}/logs", "tensorboard_log"))
@@ -77,7 +82,8 @@ def ganite_torch(train_x, train_t, train_y, test_x, test_potential_y, parameters
                 y_tilde = generator(x, t, y)
                 d_logit = discriminator(x, t, y, y_tilde)
                 D_loss = torch.mean(nn.BCEWithLogitsLoss()(d_logit, t))
-                G_loss_GAN = -D_loss
+                # G_loss_GAN = D_loss
+                G_loss_GAN = -D_loss # minus のほうが良い結果が出る
                 label = t * y_tilde[:, 1].view(-1, 1) + (1 - t) * y_tilde[:, 0].view(-1, 1)
                 G_loss_factual = torch.mean(nn.BCEWithLogitsLoss()(y, label))
                 G_loss = G_loss_factual + alpha * G_loss_GAN
@@ -87,6 +93,10 @@ def ganite_torch(train_x, train_t, train_y, test_x, test_potential_y, parameters
                 G_optimizer.step()
 
                 # 3. Inference loss
+            train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            for x, t, y in train_loader:
+                t = t.unsqueeze(1)
+                y = y.unsqueeze(1)
                 parameter_setting_inference_net(generator, discriminator, inference_net)
 
                 y_hat = inference_net(x)

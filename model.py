@@ -13,8 +13,10 @@ class Generator(nn.Module):
     Returns:
       - G_logit: estimated potential outcomes
     """
-    def __init__(self, input_dim, h_dim):
+    def __init__(self, input_dim, h_dim, flag_dropout):
         super(Generator, self).__init__()
+
+        self.flag_dropout = flag_dropout
 
         self.fc1 = nn.Linear(input_dim + 2, h_dim) # +2 for t and y
         self.dp1 = nn.Dropout(p=0.2)
@@ -44,8 +46,12 @@ class Generator(nn.Module):
 
     def forward(self, x, t, y):
         inputs = torch.cat([x, t, y], dim=1)
-        h1 = self.dp1(torch.relu(self.fc1(inputs)))
-        h2 = self.dp2(torch.relu(self.fc2(h1)))
+        if self.flag_dropout:
+            h1 = self.dp1(torch.relu(self.fc1(inputs)))
+            h2 = self.dp2(torch.relu(self.fc2(h1)))
+        else:
+            h1 = torch.relu(self.fc1(inputs))
+            h2 = torch.relu(self.fc2(h1))
         h31 = torch.relu(self.fc31(h2))
         logit1 = self.fc32(h31)
         y_hat_1 = torch.nn.Sigmoid()(logit1)

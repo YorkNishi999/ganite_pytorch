@@ -40,6 +40,10 @@ def parameter_setting_inference_net(generator, discriminator, inference_net):
     discriminator.eval()
     inference_net.train()
 
-def create_result_dir(name):
+def create_result_dir(name, parameters):
     if not os.path.exists(f"results/{name}"):
         os.makedirs(f"results/{name}")
+
+    with open(f"results/{name}/parameters.txt", "w") as f:
+        for key, value in parameters.items():
+            f.write(f"{key}: {value}\n")

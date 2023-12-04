@@ -41,13 +41,20 @@ Note that network parameters should be optimized.
 
 1. Run the experiments
 ```shell
-python3 main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 100 --iteration 100000 --batch_size 1024 --alpha 1 --name test04 --lr 5e-5
-python3 main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 100 --iteration 100000 --batch_size 1024 --alpha 1 --name test05 --lr 1e-5
+python main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 50 --iteration 10000 --batch_size 4096 --alpha 1 --name no_drop_adam01 --lr 1e-5
+python main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 200 --iteration 10000 --batch_size 4096 --alpha 1 --name no_drop_adam02 --lr 1e-5
+python main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 50 --iteration 10000 --batch_size 4096 --alpha 1 --name test_separate_train01 --lr 1e-5
+
 ```
 
 2. See log
 ```shell
 tensorboard --logdir .results/test01
+```
+
+3. Test by trained model
+```shell
+python test_ganite_torch.py --name no_drop_adam01 --epoch 10000 --h_dim 50
 ```
 
 ### Outputs
