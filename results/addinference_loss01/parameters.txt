@@ -1,0 +1,6 @@
+h_dim: 8
+iteration: 50000
+batch_size: 128
+alpha: 2.0
+beta: 2.0
+lr: 1e-05

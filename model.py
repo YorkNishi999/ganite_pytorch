@@ -20,6 +20,10 @@ class Generator(nn.Module):
 
         self.fc1 = nn.Linear(input_dim + 2, h_dim) # +2 for t and y
         self.dp1 = nn.Dropout(p=0.2)
+        self.fc2_1 = nn.Linear(h_dim, h_dim)
+        self.dp2_1 = nn.Dropout(p=0.2)
+        self.fc2_2 = nn.Linear(h_dim, h_dim)
+        self.dp2_2 = nn.Dropout(p=0.2)
         self.fc2 = nn.Linear(h_dim, h_dim)
         self.dp2 = nn.Dropout(p=0.2)
 
@@ -48,10 +52,14 @@ class Generator(nn.Module):
         inputs = torch.cat([x, t, y], dim=1)
         if self.flag_dropout:
             h1 = self.dp1(torch.relu(self.fc1(inputs)))
-            h2 = self.dp2(torch.relu(self.fc2(h1)))
+            h2_1 = self.dp2_1(torch.relu(self.fc2_1(h1)))
+            h2_2 = self.dp2_2(torch.relu(self.fc2_2(h2_1)))
+            h2 = self.dp2(torch.relu(self.fc2(h2_2)))
         else:
             h1 = torch.relu(self.fc1(inputs))
-            h2 = torch.relu(self.fc2(h1))
+            h2_1 = torch.relu(self.fc2_1(h1))
+            h2_2 = torch.relu(self.fc2_2(h2_1))
+            h2 = torch.relu(self.fc2(h2_2))
         h31 = torch.relu(self.fc31(h2))
         logit1 = self.fc32(h31)
         y_hat_1 = torch.nn.Sigmoid()(logit1)

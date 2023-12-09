@@ -14,7 +14,8 @@ from bartpy.sklearnmodel import SklearnModel
 
 def main(args):
 
-    models = [LinearRegression(), NearestCentroid(), SklearnModel()]
+    models = [LinearRegression(), NearestCentroid()]
+    # models = [SklearnModel()]
     for model in models:
     # model = () # regression
     # # model = () # knn
@@ -25,7 +26,7 @@ def main(args):
         ate_test_list = []
 
         if model == SklearnModel():
-            iteration = 10
+            iteration = 1
         else:
             iteration = 1000
         for _ in range(iteration):
