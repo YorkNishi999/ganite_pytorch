@@ -42,8 +42,7 @@ def main (args):
     - metric_results: performance on testing data
     """
     ## Data loading
-    train_x, train_t, train_y, train_potential_y, test_x, test_potential_y = \
-    data_loading_twin(args.train_rate)
+    train_x, train_t, train_y, train_potential_y, test_x, test_potential_y = data_loading_twin(args.train_rate)
 
     print(args.data_name + ' dataset is ready.')
 
@@ -54,12 +53,16 @@ def main (args):
     parameters['iteration'] = args.iteration
     parameters['batch_size'] = args.batch_size
     parameters['alpha'] = args.alpha
+    parameters['beta'] = args.beta
     parameters['lr'] = args.lr
+    flags = {}
+    flags['dropout'] = args.dropout
+    flags['adamw'] = args.adamw
     name = args.name
 
-    create_result_dir(name)
+    create_result_dir(name, parameters)
 
-    test_y_hat = ganite_torch(train_x, train_t, train_y, test_x, test_potential_y, parameters, name)
+    test_y_hat = ganite_torch(train_x, train_t, train_y, test_x, train_potential_y, test_potential_y, parameters, name, flags)
     print('Finish GANITE training and potential outcome estimations')
 
     ## Performance metrics
@@ -68,18 +71,13 @@ def main (args):
 
     # 1. PEHE
     test_PEHE, interval = PEHE(test_potential_y, test_y_hat)
-    metric_results['PEHE'] = np.round(test_PEHE)
-    metric_results['PEHE_interval'] = np.round(interval)
+    metric_results['PEHE'] = test_PEHE
+    metric_results['PEHE_interval'] = interval
 
     # 2. ATE
     test_ATE, interval = ATE(test_potential_y, test_y_hat)
-    metric_results['ATE'] = np.round(test_ATE)
-    metric_results['ATE_interval'] = np.round(interval)
-
-    # # 3. sqrt_PEHE # comment out for twin
-    # test_sqrt_PEHE, interval = sqrt_PEHE(test_potential_y, test_y_hat)
-    # metric_results['sqrt_PEHE'] = np.round(test_sqrt_PEHE)
-    # metric_results['sqrt_PEHE_interval'] = np.round(interval)
+    metric_results['ATE'] = test_ATE
+    metric_results['ATE_interval'] = interval
 
     ## Print performance metrics on testing data
     print(metric_results)
@@ -121,7 +119,12 @@ if __name__ == '__main__':
         '--alpha',
         help='hyper-parameter to adjust the loss importance (should be optimized)',
         default=1,
-        type=int)
+        type=float)
+    parser.add_argument(
+        '--beta',
+        help='hyper-parameter to adjust the loss importance (should be optimized)',
+        default=1,
+        type=float)
     parser.add_argument(
         '--name',
         help='name of the experiment',
@@ -132,6 +135,17 @@ if __name__ == '__main__':
         help='learning rate',
         default=5e-4,
         type=float)
+    parser.add_argument(
+        '--adamw',
+        help='use adamw optimizer',
+        default=False,
+        type=bool)
+    parser.add_argument(
+        '--dropout',
+        help='use dropout',
+        default=False,
+        type=bool)
+
 
     args = parser.parse_args()
 

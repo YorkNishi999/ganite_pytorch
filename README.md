@@ -44,6 +44,7 @@ Note that network parameters should be optimized.
 python main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 50 --iteration 10000 --batch_size 4096 --alpha 1 --name no_drop_adam01 --lr 1e-5
 python main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 200 --iteration 10000 --batch_size 4096 --alpha 1 --name no_drop_adam02 --lr 1e-5
 python main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 50 --iteration 10000 --batch_size 4096 --alpha 1 --name test_separate_train01 --lr 1e-5
+python main_ganite_torch.py --data_name twin --train_rate 0.8 --h_dim 50 --iteration 100000 --batch_size 4096 --alpha 2 --beta 2 --name addinference_loss01 --lr 1e-5
 
 ```
 

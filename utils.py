@@ -40,6 +40,18 @@ def parameter_setting_inference_net(generator, discriminator, inference_net):
     discriminator.eval()
     inference_net.train()
 
+
+def parameter_setting_test(generator, discriminator, inference_net):
+    for params in generator.parameters():
+        params.requires_grad = False
+    for params in discriminator.parameters():
+        params.requires_grad = False
+    for params in inference_net.parameters():
+        params.requires_grad = False
+    generator.eval()
+    discriminator.eval()
+    inference_net.eval()
+
 def create_result_dir(name, parameters):
     if not os.path.exists(f"results/{name}"):
         os.makedirs(f"results/{name}")

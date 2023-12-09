@@ -74,7 +74,7 @@ class Discriminator(nn.Module):
     """
     def __init__(self, input_dim, h_dim):
         super(Discriminator, self).__init__()
-        self.fc1 = nn.Linear(input_dim + 2, h_dim) # +2 for t and y
+        self.fc1 = nn.Linear(input_dim + 2, h_dim) # +2 for y(t=0) and y(t=1)
         self.fc2 = nn.Linear(h_dim, h_dim)
         self.fc3 = nn.Linear(h_dim, 1)
 
