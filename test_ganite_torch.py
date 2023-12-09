@@ -1,29 +1,18 @@
-"""GANITE Codebase. by PyTorch
-Reference: Jinsung Yoon, James Jordon, Mihaela van der Schaar,
-"GANITE: Estimation of Individualized Treatment Effects using Generative Adversarial Nets",
-International Conference on Learning Representations (ICLR), 2018.
-
-Paper link: https://openreview.net/forum?id=ByKWUeWA-
------------------------------
-
-main_ganite.py
-
-(1) Import data
-(2) Train GANITE & Estimate potential outcomes
-(3) Evaluate the performances
-  - PEHE
-  - ATE
-"""
-
+import os
 import argparse
 import numpy as np
 import warnings
 warnings.filterwarnings("ignore")
 
+import torch
+
 from ganite_torch import ganite_torch
 from data_loading import data_loading_twin
 from metrics_all import *
 from utils import create_result_dir
+from model import InferenceNet
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def main (args):
     """Main function for GANITE experiments.
@@ -42,7 +31,8 @@ def main (args):
     - metric_results: performance on testing data
     """
     ## Data loading
-    train_x, train_t, train_y, train_potential_y, test_x, test_potential_y = data_loading_twin(args.train_rate)
+    train_x, train_t, train_y, train_potential_y, test_x, test_potential_y = \
+    data_loading_twin(args.train_rate)
 
     print(args.data_name + ' dataset is ready.')
 
@@ -53,17 +43,22 @@ def main (args):
     parameters['iteration'] = args.iteration
     parameters['batch_size'] = args.batch_size
     parameters['alpha'] = args.alpha
-    parameters['beta'] = args.beta
     parameters['lr'] = args.lr
-    flags = {}
-    flags['dropout'] = args.dropout
-    flags['adamw'] = args.adamw
     name = args.name
 
-    create_result_dir(name, parameters)
+    results_path = os.path.join("results", name)
+    model_path = os.path.join(results_path, "models")
 
-    test_y_hat = ganite_torch(train_x, train_t, train_y, test_x, train_potential_y, test_potential_y, parameters, name, flags)
-    print('Finish GANITE training and potential outcome estimations')
+    # load model
+    num_epoch = args.epoch - 1
+    inference_net = InferenceNet(train_x.shape[1], parameters['h_dim'])
+    inference_net.load_state_dict(torch.load(os.path.join(model_path, f"epoch_{num_epoch}_i.pth")))
+    inference_net = inference_net.to(device)
+
+
+    test_x = torch.tensor(test_x, dtype=torch.float32).to(device)
+
+    test_y_hat = inference_net(test_x).cpu().detach().numpy()
 
     ## Performance metrics
     # Output initialization
@@ -71,6 +66,8 @@ def main (args):
 
     # 1. PEHE
     test_PEHE, interval = PEHE(test_potential_y, test_y_hat)
+    print(test_PEHE, interval)
+
     metric_results['PEHE'] = test_PEHE
     metric_results['PEHE_interval'] = interval
 
@@ -81,7 +78,7 @@ def main (args):
 
     ## Print performance metrics on testing data
     print(metric_results)
-    with open(f"results/{name}/results.txt", "w") as f:
+    with open(f"results/{name}/results_from_testcode.txt", "w") as f:
         f.write(str(metric_results))
 
     return test_y_hat, metric_results
@@ -119,12 +116,7 @@ if __name__ == '__main__':
         '--alpha',
         help='hyper-parameter to adjust the loss importance (should be optimized)',
         default=1,
-        type=float)
-    parser.add_argument(
-        '--beta',
-        help='hyper-parameter to adjust the loss importance (should be optimized)',
-        default=1,
-        type=float)
+        type=int)
     parser.add_argument(
         '--name',
         help='name of the experiment',
@@ -136,16 +128,10 @@ if __name__ == '__main__':
         default=5e-4,
         type=float)
     parser.add_argument(
-        '--adamw',
-        help='use adamw optimizer',
-        default=False,
-        type=bool)
-    parser.add_argument(
-        '--dropout',
-        help='use dropout',
-        default=False,
-        type=bool)
-
+        '--epoch',
+        help='epoch',
+        default=10000,
+        type=int)
 
     args = parser.parse_args()
 

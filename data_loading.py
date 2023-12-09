@@ -1,17 +1,3 @@
-"""GANITE Codebase.
-
-Reference: Jinsung Yoon, James Jordon, Mihaela van der Schaar,
-"GANITE: Estimation of Individualized Treatment Effects using Generative Adversarial Nets",
-International Conference on Learning Representations (ICLR), 2018.
-
-Paper link: https://openreview.net/forum?id=ByKWUeWA-
------------------------------
-Note: Load real-world individualized treatment effects estimation datasets
-
-(1) data_loading_twin: Load twins data.
-  - Reference: http://data.nber.org/data/linked-birth-infant-death-data-vital-statistics-data.html
-"""
-
 # Necessary packages
 import numpy as np
 from scipy.special import expit
