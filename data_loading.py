@@ -27,18 +27,22 @@ def data_loading_twin(train_data_split_rate = 0.8):
 
     # Define potential outcomes
     potential_y = ori_data[:, 30:]
+
     # Die within 1 year = 1, otherwise = 0
     potential_y = np.array(potential_y < 9999, dtype=float)
 
     ## Assign treatment
     coef = np.random.uniform(-0.01, 0.01, size = [dim,1])
     prob_temp = expit(np.matmul(x, coef) + np.random.normal(0,0.01, size = [no,1]))
+    # 11400 サンプル分できた
 
     prob_t = prob_temp/(2*np.mean(prob_temp))
     prob_t[prob_t>1] = 1
 
     t = np.random.binomial(1,prob_t,[no,1])
     t = t.reshape([no,])
+    print(t)
+    print(t.shape)
 
     ## Define observable outcomes
     y = np.zeros([no,1])
