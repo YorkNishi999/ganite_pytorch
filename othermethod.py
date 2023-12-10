@@ -14,21 +14,15 @@ from bartpy.sklearnmodel import SklearnModel
 
 def main(args):
 
-    models = [LinearRegression(), NearestCentroid()]
-    # models = [SklearnModel()]
+    models = [LinearRegression()]
+    # models = [LinearRegression(), NearestCentroid()]
     for model in models:
-    # model = () # regression
-    # # model = () # knn
-    # # model = SklearnModel() # bart
         pehe_train_list = []
         pehe_test_list = []
         ate_train_list = []
         ate_test_list = []
 
-        if model == SklearnModel():
-            iteration = 1
-        else:
-            iteration = 1000
+        iteration = 1
         for _ in range(iteration):
             ## Data loading
             train_x, train_t, train_y, train_potential_y, test_x, test_potential_y = data_loading_twin(0.8)

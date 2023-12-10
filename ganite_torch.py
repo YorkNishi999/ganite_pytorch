@@ -8,7 +8,7 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, TensorDataset
 from torch.utils.tensorboard import SummaryWriter
 
-from model import Generator, Discriminator, InferenceNet
+from model import *
 from utils import *
 from metrics_all import *
 
@@ -36,9 +36,11 @@ def ganite_torch(train_x, train_t, train_y, test_x, train_potential_y, test_pote
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     # Initialize models
-    generator = Generator(train_x.shape[1], h_dim, flags['dropout']).to(device)
-    discriminator = Discriminator(train_x.shape[1], h_dim).to(device)
-    inference_net = InferenceNet(train_x.shape[1], h_dim).to(device)
+    # generator = Generator(train_x.shape[1], h_dim, flags['dropout']).to(device)
+    generator = GeneratorDeep(train_x.shape[1], h_dim, flags['dropout'], 15).to(device)
+    discriminator = Discriminator(train_x.shape[1], h_dim, flags['dropout']).to(device)
+    # inference_net = InferenceNet(train_x.shape[1], h_dim, flags['dropout']).to(device)
+    inference_net = InferenceNetDeep(train_x.shape[1], h_dim, flags['dropout'], 15).to(device)
 
     # Optimizers
     if flags['adamw']:
@@ -85,8 +87,8 @@ def ganite_torch(train_x, train_t, train_y, test_x, train_potential_y, test_pote
                 y_tilde = generator(x, t, y)
                 d_logit = discriminator(x, t, y, y_tilde)
                 D_loss = nn.BCEWithLogitsLoss()(d_logit, t)
-                G_loss_GAN = D_loss
-                # G_loss_GAN = -D_loss # minus のほうが良い結果が出る
+                # G_loss_GAN = D_loss
+                G_loss_GAN = -D_loss # minus のほうが良い結果が出る
                 y_est = t * y_tilde[:, 1].view(-1, 1) + (1 - t) * y_tilde[:, 0].view(-1, 1)
                 G_loss_factual = nn.BCEWithLogitsLoss()(y_est, y)
                 G_loss = G_loss_factual + alpha * G_loss_GAN
@@ -96,10 +98,10 @@ def ganite_torch(train_x, train_t, train_y, test_x, train_potential_y, test_pote
                 G_optimizer.step()
 
                 # 3. Inference loss
-            train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-            for x, t, y in train_loader:
-                t = t.unsqueeze(1)
-                y = y.unsqueeze(1)
+            # train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            # for x, t, y in train_loader:
+                # t = t.unsqueeze(1)
+                # y = y.unsqueeze(1)
                 parameter_setting_inference_net(generator, discriminator, inference_net)
 
                 y_hat = inference_net(x)
